@@ -1,4 +1,5 @@
-## The project aims to show ML model deployment via a container. 
+## Context
+This small project aims to show ML model deployment via a container. 
 
 ## Some notes
  - The model used is simple object detection model, that consists of pre-trained FasterRCNN with changed and tuned heads to be confroming to 3 base classes -- apples, bananas and oranges. The model training data and time was quite small, so accuracy is varying.
