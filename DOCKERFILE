@@ -2,9 +2,28 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-COPY . .
+# Avoid Python buffering issues
+ENV PYTHONUNBUFFERED=1
 
+COPY requirements.txt .
+
+RUN pip install --no-cache-dir --upgrade pip
+
+# Install NumPy 2 FIRST
+RUN pip install --no-cache-dir "numpy>=2,<3"
+
+# Install PyTorch CPU (NumPy 2 compatible)
+RUN pip install --no-cache-dir \
+    --index-url https://download.pytorch.org/whl/cpu \
+    torch==2.4.1+cpu torchvision==0.19.1+cpu
+
+# Install remaining deps
 RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy app
+COPY main.py .
+COPY model.py .
+COPY model.pth .
 
 EXPOSE 8000
 
