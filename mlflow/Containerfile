@@ -1,0 +1,18 @@
+FROM python:3.10-slim
+
+# Install MLflow into the interpreter we invoke at runtime.
+RUN python -m pip install --upgrade pip && \
+    python -m pip install --no-cache-dir mlflow
+
+EXPOSE 5000
+
+# mkdir runs at container start (after volume mount), not at build time.
+# Four slashes = absolute path for SQLite URI.
+CMD ["sh", "-c", \
+     "mkdir -p /mlruns/artifacts && \
+      python -m mlflow server \
+        --host 0.0.0.0 \
+        --port 5000 \
+        --allowed-hosts mlflow,mlflow:5000,localhost,localhost:5000,127.0.0.1,127.0.0.1:5000 \
+        --backend-store-uri sqlite:////mlruns/mlflow.db \
+        --default-artifact-root /mlruns/artifacts"]

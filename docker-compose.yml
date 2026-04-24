@@ -1,0 +1,50 @@
+services:
+  mlflow:
+    build:
+      context: ./mlflow
+      dockerfile: Containerfile
+    command: >
+      sh -c "mkdir -p /mlruns/artifacts &&
+      python -m mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --allowed-hosts mlflow,mlflow:5000,localhost,localhost:5000,127.0.0.1,127.0.0.1:5000
+      --backend-store-uri sqlite:////mlruns/mlflow.db
+      --default-artifact-root /mlruns/artifacts"
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlruns
+    restart: unless-stopped
+
+  inference:
+    build:
+      context: .
+      dockerfile: Containerfile
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      # Set either MLFLOW_MODEL_URI or (MLFLOW_RUN_ID + MLFLOW_MODEL_ARTIFACT).
+      # Example: runs:/<run_id>/torchscript/fruits_model_light.pt
+      MLFLOW_MODEL_URI: ${MLFLOW_MODEL_URI:-}
+      MLFLOW_RUN_ID: ${MLFLOW_RUN_ID:-}
+      MLFLOW_MODEL_ARTIFACT: ${MLFLOW_MODEL_ARTIFACT:-torchscript/fruits_model_light.pt}
+      # Used only when no MLflow URI/run is provided:
+      LOCAL_MODEL_PATH: ${LOCAL_MODEL_PATH:-fruits_model.pt}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mlflow
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Containerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - inference
+    restart: unless-stopped
+
+volumes:
+  mlflow-data:
